@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sri Lanka Vehicle Import Expert System</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #e8edf2;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 15px;
+  color: #1a3a5c;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Title bar ── */
+#titlebar {
+  background: #1e4d8c;
+  color: #ffffff;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+}
+#titlebar .icon {
+  width: 22px; height: 22px;
+  background: #ffffff;
+  border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  color: #1e4d8c;
+  font-weight: bold;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+#titlebar .name { font-size: 16px; font-weight: 600; }
+#titlebar .sub  { font-size: 13px; color: #cce0f5; margin-left: auto; }
+
+/* ── Engine tab strip ── */
+#tabstrip {
+  background: #d0dae8;
+  border-bottom: 2px solid #1e4d8c;
+  display: flex;
+  flex-shrink: 0;
+  padding: 0 12px;
+}
+.tab {
+  padding: 7px 18px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1e3a5c;
+  border: 1px solid transparent;
+  border-bottom: none;
+  background: none;
+  font-family: inherit;
+  margin-right: 3px;
+  margin-top: 4px;
+  border-radius: 4px 4px 0 0;
+}
+.tab:hover  { background: #bfcde0; color: #1a3a5c; }
+.tab.active {
+  background: #ffffff;
+  color: #1e4d8c;
+  font-weight: 700;
+  border-color: #9ab0cc #9ab0cc transparent;
+  position: relative;
+  top: 2px;
+}
+
+/* ── Main layout ── */
+#main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  padding: 10px;
+  gap: 10px;
+}
+
+/* ── Panels ── */
+.panel {
+  background: #ffffff;
+  border: 1px solid #b0c4d8;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 1px 1px 4px rgba(0,0,0,0.08);
+}
+
+.panel-title {
+  background: #f0f4f9;
+  border-bottom: 1px solid #b0c4d8;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e4d8c;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+/* ── Form panel (left) ── */
+#form-panel {
+  width: 330px;
+  flex-shrink: 0;
+}
+
+#form-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 12px;
+}
+
+.sec {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1e4d8c;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin: 14px 0 6px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid #dce8f5;
+}
+.sec:first-child { margin-top: 2px; }
+
+.fld { margin-bottom: 7px; }
+.lbl { display: block; font-size: 13px; color: #1e3a5c; margin-bottom: 3px; }
+
+select, input[type=text], input[type=number] {
+  width: 100%;
+  padding: 4px 7px;
+  border: 1px solid #9ab0cc;
+  border-radius: 3px;
+  background: #f7fafd;
+  color: #1a3a5c;
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+}
+select:focus, input:focus { border-color: #1e4d8c; background: #fff; }
+select option { background: #fff; }
+
+/* ── Toggle (yes/no) ── */
+.tog { display: flex; gap: 4px; }
+.tbtn {
+  flex: 1;
+  padding: 4px;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  border: 1px solid #9ab0cc;
+  border-radius: 3px;
+  background: #f0f4f9;
+  color: #1e3a5c;
+  font-weight: 500;
+}
+.tbtn:hover { background: #dce8f5; }
+.tbtn.yes { background: #1e4d8c; color: #fff; border-color: #1e4d8c; }
+.tbtn.no  { background: #c0392b; color: #fff; border-color: #992d22; }
+
+/* ── Action buttons ── */
+#actions {
+  padding: 10px 12px;
+  border-top: 1px solid #b0c4d8;
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+#run-btn {
+  flex: 1;
+  padding: 7px;
+  background: #1e4d8c;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+#run-btn:hover    { background: #163d70; }
+#run-btn:disabled { background: #8aaac8; cursor: not-allowed; }
+#clear-btn {
+  padding: 7px 12px;
+  background: #f0f4f9;
+  color: #1e3a5c;
+  border: 1px solid #9ab0cc;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+#clear-btn:hover { background: #dce8f5; color: #1a3a5c; }
+
+/* ── Output panel (right) ── */
+#out-panel { flex: 1; }
+
+#output {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 16px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #1a3a5c;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Output styles ── */
+.o-head  { color: #1e4d8c; font-weight: bold; }
+.o-rule  { color: #2563a8; }
+.o-note  { color: #1a3a5c; }
+.o-ok    { color: #1a6b2a; font-weight: bold; }
+.o-fail  { color: #c0392b; font-weight: bold; }
+.o-label { color: #1e3a5c; }
+.o-val   { color: #1a3a5c; font-weight: 600; }
+.o-dim   { color: #3a5a7c; }
+.o-hl    { color: #1e4d8c; font-weight: bold; }
+.o-sep   { color: #6a8aaa; }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f0f4f9; }
+::-webkit-scrollbar-thumb { background: #9ab0cc; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #1e4d8c; }
+</style>
+</head>
+<body>
+
+<div id="titlebar">
+  <div class="icon">ES</div>
+  <div>
+    <div class="name">Sri Lanka Vehicle Import Expert System</div>
+  </div>
+  <div class="sub">Gazette Extraordinary No. 2421/44 &nbsp;&bull;&nbsp; 1 February 2025</div>
+</div>
+
+<div id="tabstrip">
+  <button class="tab active" onclick="selEngine(0)">Engine 1 — Eligibility Checker</button>
+  <button class="tab"        onclick="selEngine(1)">Engine 2 — Vehicle Selector</button>
+  <button class="tab"        onclick="selEngine(2)">Engine 3 — Cost Estimator</button>
+  <button class="tab"        onclick="selEngine(3)">Run All Engines</button>
+</div>
+
+<div id="main">
+
+  <!-- Left: form -->
+  <div class="panel" id="form-panel">
+    <div class="panel-title" id="form-title">Input Parameters</div>
+    <div id="form-area"></div>
+    <div id="actions">
+      <button id="run-btn" onclick="runEngine()">&#9654; Run</button>
+      <button id="clear-btn" onclick="clearOut()">Clear</button>
+    </div>
+  </div>
+
+  <!-- Right: output -->
+  <div class="panel" id="out-panel">
+    <div class="panel-title">Inference Output</div>
+    <div id="output"></div>
+  </div>
+
+</div>
+
+<script>
+const API = 'http://127.0.0.1:8000';
+let eng = 0;
+
+// ── Form builders ─────────────────────────────────────────────────────────────
+
+const VT = ['car','suv','van','pickup','motorcycle','three_wheeler'];
+const OR = ['japan','uk','singapore','australia'];
+const FT = ['petrol','diesel','petrol_hybrid','electric'];
+const FP = ['any','petrol','diesel','petrol_hybrid','electric'];
+
+const mkSel = (id, opts, def) =>
+  `<select id="${id}">${opts.map(o=>`<option${o===def?' selected':''}>${o}</option>`).join('')}</select>`;
+
+const mkNum = (id, v, mn, mx, st=1) =>
+  `<input type="number" id="${id}" value="${v}" min="${mn}" max="${mx}" step="${st}">`;
+
+const mkTxt = (id, v, ph='') =>
+  `<input type="text" id="${id}" value="${v}" placeholder="${ph}">`;
+
+const mkTog = (id, def=true) =>
+  `<div class="tog">
+    <button class="tbtn${def?' yes':''}" id="${id}-y" onclick="setTog('${id}',true)">Yes</button>
+    <button class="tbtn${def?'':' no'}" id="${id}-n" onclick="setTog('${id}',false)">No</button>
+  </div>`;
+
+const fld = (lbl, html) => `<div class="fld"><label class="lbl">${lbl}</label>${html}</div>`;
+const sec = t => `<div class="sec">${t}</div>`;
+
+function setTog(id, v) {
+  document.getElementById(`${id}-y`).className = 'tbtn' + (v ? ' yes' : '');
+  document.getElementById(`${id}-n`).className = 'tbtn' + (v ? '' : ' no');
+}
+function getTog(id) { return document.getElementById(`${id}-y`).classList.contains('yes'); }
+function gv(id) { const e = document.getElementById(id); return e ? e.value : ''; }
+function gn(id) { const v = parseFloat(gv(id)); return isNaN(v) ? null : v; }
+function gi(id) { const v = parseInt(gv(id));   return isNaN(v) ? null : v; }
+
+// Form fragments
+const vehicleFields = () =>
+  sec('Vehicle Details') +
+  fld('Vehicle Type',    mkSel('vehicle_type', VT, 'car')) +
+  fld('Origin Country',  mkSel('origin_country', OR, 'japan')) +
+  fld('Fuel Type',       mkSel('fuel_type', FT, 'petrol_hybrid')) +
+  sec('Manufacture Date') +
+  fld('Year',  mkNum('mfr_year',  2022, 1990, 2025)) +
+  fld('Month', mkNum('mfr_month', 1,    1,    12)) +
+  sec('Bill of Lading Date') +
+  fld('Year',  mkNum('bol_year',  2024, 2020, 2030)) +
+  fld('Month', mkNum('bol_month', 6,    1,    12));
+
+const safetyFields = () =>
+  sec('Safety & Compliance') +
+  fld('Euro 6 Compliant',               mkTog('euro6',  true)) +
+  fld('Minimum 2 Airbags',              mkTog('airbags',true)) +
+  fld('ABS (Anti-lock Brakes)',         mkTog('abs',    true)) +
+  fld('ESC (Stability Control)',        mkTog('esc',    true)) +
+  fld('Battery Warranty ≥5yr/100,000km', mkTog('batt',  true));
+
+const selectorFields = () =>
+  sec('Search Preferences') +
+  fld('Budget (USD)',      mkNum('budget_usd', 20000, 500, 500000, 500)) +
+  fld('Fuel Preference',  mkSel('fuel_pref', FP, 'any')) +
+  fld('Brand Preference', mkTxt('brand_pref', 'any', 'e.g. toyota, or any'));
+
+const costFields = () =>
+  sec('Engine & Price') +
+  fld('Engine Displacement (cc)',     mkNum('engine_cc', 1500, 0, 9999)) +
+  fld('Motor Power kW (EV/HEV only)', mkNum('motor_kw',  0,    0, 500)) +
+  fld('Purchase Price (USD)',          mkNum('price_usd', 15000, 0, 1000000, 100)) +
+  sec('Exchange Rates (optional)') +
+  fld('USD → LKR Rate', mkNum('usd_lkr', 320,     200,   500)) +
+  fld('JPY → USD Rate', mkNum('jpy_usd', 0.00667, 0.001, 0.02, 0.00001));
+
+const FORMS = [
+  () => vehicleFields() + safetyFields(),
+  () => selectorFields(),
+  () => vehicleFields() + costFields(),
+  () => vehicleFields() + safetyFields() + selectorFields() + costFields(),
+];
+
+const TITLES = [
+  'Engine 1 — Eligibility Parameters',
+  'Engine 2 — Selector Parameters',
+  'Engine 3 — Cost Parameters',
+  'All Engines — Combined Parameters',
+];
+
+function selEngine(n) {
+  eng = n;
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===n));
+  document.getElementById('form-area').innerHTML = FORMS[n]();
+  document.getElementById('form-title').textContent = TITLES[n];
+}
+
+// ── Data collectors ───────────────────────────────────────────────────────────
+
+function eligFields() {
+  return {
+    vehicle_type: gv('vehicle_type'),
+    manufacture_year: gi('mfr_year'), manufacture_month: gi('mfr_month'),
+    bill_of_lading_year: gi('bol_year'), bill_of_lading_month: gi('bol_month'),
+    origin_country: gv('origin_country'),
+    fuel_type: gv('fuel_type'),
+    euro6_compliant: getTog('euro6'),
+    has_min_airbags: getTog('airbags'),
+    has_abs: getTog('abs'),
+    has_esc: getTog('esc'),
+    has_battery_warranty: getTog('batt'),
+  };
+}
+
+function selData() {
+  return {
+    budget_usd: gn('budget_usd'),
+    fuel_preference: gv('fuel_pref') || 'any',
+    brand_preference: gv('brand_pref') || 'any',
+  };
+}
+
+function costData() {
+  const fuel = gv('fuel_type'), origin = gv('origin_country'), kw = gi('motor_kw');
+  return {
+    vehicle_type: gv('vehicle_type'),
+    manufacture_year: gi('mfr_year'), manufacture_month: gi('mfr_month'),
+    bill_of_lading_year: gi('bol_year'), bill_of_lading_month: gi('bol_month'),
+    origin_country: origin, fuel_type: fuel, engine_cc: gi('engine_cc'),
+    ...(fuel === 'electric' && kw ? { motor_kw: kw } : {}),
+    purchase_price_usd: gn('price_usd'),
+    ...(gn('usd_lkr') ? { usd_to_lkr: gn('usd_lkr') } : {}),
+    ...(origin === 'japan' && gn('jpy_usd') ? { jpy_to_usd: gn('jpy_usd') } : {}),
+  };
+}
+
+// ── Output helpers ────────────────────────────────────────────────────────────
+
+const out = document.getElementById('output');
+const w  = html => { out.innerHTML += html; out.scrollTop = out.scrollHeight; };
+const wl = html => w(html + '\n');
+const s  = (cls, t) => `<span class="${cls}">${escHtml(t)}</span>`;
+const sep = () => wl('<span class="o-sep">' + '─'.repeat(72) + '</span>');
+
+function escHtml(t) {
+  return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function header(title) {
+  wl('');
+  sep();
+  wl(s('o-head', title) + s('o-dim', '   ' + new Date().toLocaleTimeString()));
+  sep();
+  wl('');
+}
+
+function renderTrail(trail) {
+  trail.forEach((note, i) => {
+    wl(s('o-rule', `  [Rule ${String(i+1).padStart(2,'0')}]  `) + s('o-note', note));
+  });
+  wl('');
+}
+
+// ── Per-engine renders ────────────────────────────────────────────────────────
+
+function renderEligibility(res) {
+  header('ENGINE 1 — ELIGIBILITY CHECKER');
+  wl(s('o-label', '  Inference trace:') + '\n');
+  renderTrail(res.trail);
+  sep();
+  if (res.eligible) {
+    wl(s('o-ok', '  RESULT:  ELIGIBLE  ✓'));
+  } else {
+    wl(s('o-fail', '  RESULT:  NOT ELIGIBLE  ✗'));
+  }
+  wl(s('o-label', '  Reason:  ') + s('o-val', res.reason));
+  sep();
+}
+
+function renderSelector(res) {
+  header('ENGINE 2 — BEST VEHICLE SELECTOR');
+  wl(s('o-label', '  Inference trace:') + '\n');
+  renderTrail(res.trail);
+  sep();
+
+  if (res.recommendations.length === 0) {
+    wl(s('o-fail', '  No vehicles matched. Try a higher budget or broader preferences.'));
+  } else {
+    wl(s('o-ok', `  TOP ${res.recommendations.length} RECOMMENDATIONS  (${res.matched_count} vehicles matched)`));
+    wl('');
+    res.recommendations.forEach(r => {
+      wl(s('o-hl',    `  #${r.rank}  ${r.make} ${r.model}`));
+      wl(s('o-label', '      Fuel:       ') + s('o-val', r.fuel_type));
+      wl(s('o-label', '      Engine:     ') + s('o-val', r.engine_cc + ' cc'));
+      wl(s('o-label', '      Price:      ') + s('o-val', 'USD ' + r.typical_price_usd.toLocaleString()));
+      wl(s('o-label', '      Fit Score:  ') + s('o-val', r.fit_score.toFixed(3)));
+      wl('');
+    });
+  }
+  sep();
+}
+
+function renderCost(res) {
+  header('ENGINE 3 — TOTAL LANDED COST ESTIMATOR');
+  wl(s('o-label', '  Inference trace:') + '\n');
+  renderTrail(res.trail);
+  sep();
+  wl(s('o-ok', '  COST BREAKDOWN') + '\n');
+
+  const row = (lbl, val) =>
+    wl(s('o-label', '  ' + lbl.padEnd(30)) + s('o-val', val));
+
+  row('Purchase price:',   'USD ' + res.purchase_price_usd.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}));
+  row('Sea freight:',      'USD ' + res.shipping_usd.toFixed(2));
+  row('Marine insurance:', 'USD ' + res.insurance_usd.toFixed(2));
+  if (res.jaai_usd > 0)
+    row('JAAI inspection:', 'USD ' + res.jaai_usd.toFixed(2));
+  row('CIF value:',        'USD ' + res.cif_usd.toLocaleString(undefined,{maximumFractionDigits:0}));
+  wl('');
+  row('Customs duty (20%):',    'USD ' + res.cid_usd.toLocaleString(undefined,{maximumFractionDigits:0}));
+  row('CID surcharge (50%):',   'USD ' + res.cid_surcharge_usd.toLocaleString(undefined,{maximumFractionDigits:0}));
+  row('Excise duty:',           'USD ' + res.excise_duty_usd.toLocaleString(undefined,{maximumFractionDigits:0}));
+  if (res.luxury_tax_usd > 0)
+    row('Luxury tax:', 'USD ' + res.luxury_tax_usd.toLocaleString(undefined,{maximumFractionDigits:0}));
+  row('VAT (18%):',            'USD ' + res.vat_usd.toLocaleString(undefined,{maximumFractionDigits:0}));
+  row('Port charges:',         'USD ' + res.port_charges_usd.toFixed(2));
+  wl('');
+  row('Total landed cost:',    'USD ' + res.total_usd.toLocaleString(undefined,{maximumFractionDigits:0}));
+  row('',                      'LKR ' + res.total_lkr.toLocaleString());
+  row('DMT Registration fee:', 'LKR ' + res.registration_lkr.toLocaleString());
+  wl('');
+  wl(s('o-label', '  ' + 'Grand Total:'.padEnd(30)) + s('o-hl', 'LKR ' + res.grand_total_lkr.toLocaleString()));
+  sep();
+}
+
+// ── Run ───────────────────────────────────────────────────────────────────────
+
+async function runEngine() {
+  const btn = document.getElementById('run-btn');
+  btn.disabled = true;
+  btn.textContent = 'Running…';
+
+  const wm = document.getElementById('welcome-msg');
+  if (wm) wm.style.display = 'none';
+
+  try {
+    if (eng === 0) {
+      renderEligibility(await post('/eligibility', eligFields()));
+
+    } else if (eng === 1) {
+      renderSelector(await post('/selector', selData()));
+
+    } else if (eng === 2) {
+      renderCost(await post('/cost', costData()));
+
+    } else {
+      const data = { ...eligFields(), ...selData(), ...costData() };
+      const res  = await post('/all', data);
+      renderEligibility(res.eligibility);
+      renderSelector(res.selector);
+      if (res.cost) {
+        renderCost(res.cost);
+      } else {
+        wl('');
+        wl(s('o-fail', '  Engine 3 skipped — vehicle is not eligible for import.'));
+        sep();
+      }
+    }
+  } catch (err) {
+    wl('');
+    wl(s('o-fail', '  Error: ' + err.message));
+    wl(s('o-dim',  '  Make sure the API server is running.'));
+    sep();
+  }
+
+  btn.disabled = false;
+  btn.textContent = '▶ Run';
+}
+
+async function post(path, data) {
+  const r = await fetch(API + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({ detail: r.statusText }));
+    throw new Error(err.detail || r.statusText);
+  }
+  return r.json();
+}
+
+function clearOut() {
+  out.innerHTML = '';
+  welcome();
+}
+
+// ── Welcome message ───────────────────────────────────────────────────────────
+
+function welcome() {
+  sep();
+  wl(s('o-head', '  Sri Lanka Vehicle Import Expert System'));
+  wl(s('o-dim',  '  Knowledge Base: Gazette Extraordinary No. 2421/44 (1 February 2025)'));
+  sep();
+  wl('');
+  wl(s('o-label', '  Engine 1 ') + s('o-note',  'Checks whether a vehicle meets Sri Lanka import regulations.'));
+  wl(s('o-label', '  Engine 2 ') + s('o-note',  'Recommends the best vehicles within your budget and preferences.'));
+  wl(s('o-label', '  Engine 3 ') + s('o-note',  'Estimates the full landed cost including all duties and taxes.'));
+  wl('');
+  wl(s('o-dim',   '  Select an engine from the tabs above, fill in the parameters, and click Run.'));
+  wl('');
+  sep();
+  out.innerHTML = `<div id="welcome-msg">${out.innerHTML}</div>`;
+}
+
+selEngine(0);
+welcome();
+</script>
+</body>
+</html>
