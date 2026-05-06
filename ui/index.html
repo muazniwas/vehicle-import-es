@@ -164,6 +164,7 @@ select option { background: #fff; }
 .tbtn:hover { background: #dce8f5; }
 .tbtn.yes { background: #1e4d8c; color: #fff; border-color: #1e4d8c; }
 .tbtn.no  { background: #c0392b; color: #fff; border-color: #992d22; }
+.tbtn:disabled { opacity: 0.35; cursor: not-allowed; }
 
 /* ── Action buttons ── */
 #actions {
@@ -280,9 +281,12 @@ const VT = ['car','suv','van','pickup','motorcycle','three_wheeler'];
 const OR = ['japan','uk','singapore','australia'];
 const FT = ['petrol','diesel','petrol_hybrid','electric'];
 const FP = ['any','petrol','diesel','petrol_hybrid','electric'];
+const BRANDS = ['any','BMW','Daihatsu','Ford','Honda','Hyundai','Isuzu','Jaguar','Kia',
+  'Land Rover','Lexus','Mazda','Mercedes-Benz','MINI','Mitsubishi','Nissan',
+  'Subaru','Suzuki','Toyota','Vauxhall','Volkswagen','Volvo'];
 
-const mkSel = (id, opts, def) =>
-  `<select id="${id}">${opts.map(o=>`<option${o===def?' selected':''}>${o}</option>`).join('')}</select>`;
+const mkSel = (id, opts, def, onchange='') =>
+  `<select id="${id}"${onchange ? ` onchange="${onchange}"` : ''}>${opts.map(o=>`<option${o===def?' selected':''}>${o}</option>`).join('')}</select>`;
 
 const mkNum = (id, v, mn, mx, st=1) =>
   `<input type="number" id="${id}" value="${v}" min="${mn}" max="${mx}" step="${st}">`;
@@ -311,7 +315,7 @@ function gi(id) { const v = parseInt(gv(id));   return isNaN(v) ? null : v; }
 // Form fragments
 const vehicleFields = () =>
   sec('Vehicle Details') +
-  fld('Vehicle Type',    mkSel('vehicle_type', VT, 'car')) +
+  fld('Vehicle Type',    mkSel('vehicle_type', VT, 'car', 'updateSafetyFields()')) +
   fld('Origin Country',  mkSel('origin_country', OR, 'japan')) +
   fld('Fuel Type',       mkSel('fuel_type', FT, 'petrol_hybrid')) +
   sec('Manufacture Date') +
@@ -331,9 +335,10 @@ const safetyFields = () =>
 
 const selectorFields = () =>
   sec('Search Preferences') +
+  fld('Vehicle Type',     mkSel('vehicle_type', ['any', ...VT], 'any')) +
   fld('Budget (USD)',      mkNum('budget_usd', 20000, 500, 500000, 500)) +
   fld('Fuel Preference',  mkSel('fuel_pref', FP, 'any')) +
-  fld('Brand Preference', mkTxt('brand_pref', 'any', 'e.g. toyota, or any'));
+  fld('Brand Preference', mkSel('brand_pref', BRANDS, 'any'));
 
 const costFields = () =>
   sec('Engine & Price') +
@@ -344,11 +349,29 @@ const costFields = () =>
   fld('USD → LKR Rate', mkNum('usd_lkr', 320,     200,   500)) +
   fld('JPY → USD Rate', mkNum('jpy_usd', 0.00667, 0.001, 0.02, 0.00001));
 
+const allEnginesFields = () =>
+  sec('Vehicle Details') +
+  fld('Vehicle Type',     mkSel('vehicle_type', VT, 'car', 'updateSafetyFields()')) +
+  fld('Origin Country',   mkSel('origin_country', OR, 'japan')) +
+  fld('Fuel Type',        mkSel('fuel_type', FT, 'petrol_hybrid')) +
+  fld('Budget (USD)',     mkNum('budget_usd', 20000, 500, 500000, 500)) +
+  fld('Brand Preference', mkSel('brand_pref', BRANDS, 'any')) +
+  sec('Manufacture Date') +
+  fld('Year',  mkNum('mfr_year',  2022, 1990, 2025)) +
+  fld('Month', mkNum('mfr_month', 1,    1,    12)) +
+  sec('Bill of Lading Date') +
+  fld('Year',  mkNum('bol_year',  2024, 2020, 2030)) +
+  fld('Month', mkNum('bol_month', 6,    1,    12)) +
+  safetyFields() +
+  sec('Exchange Rates (optional)') +
+  fld('USD → LKR Rate', mkNum('usd_lkr', 320,     200,   500)) +
+  fld('JPY → USD Rate', mkNum('jpy_usd', 0.00667, 0.001, 0.02, 0.00001));
+
 const FORMS = [
   () => vehicleFields() + safetyFields(),
   () => selectorFields(),
   () => vehicleFields() + costFields(),
-  () => vehicleFields() + safetyFields() + selectorFields() + costFields(),
+  () => allEnginesFields(),
 ];
 
 const TITLES = [
@@ -363,6 +386,21 @@ function selEngine(n) {
   document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===n));
   document.getElementById('form-area').innerHTML = FORMS[n]();
   document.getElementById('form-title').textContent = TITLES[n];
+  updateSafetyFields();
+}
+
+function updateSafetyFields() {
+  const vtype = gv('vehicle_type');
+  const noAirbags = vtype === 'motorcycle' || vtype === 'three_wheeler';
+  const noAbs     = vtype === 'three_wheeler';
+  const noEsc     = vtype === 'motorcycle' || vtype === 'three_wheeler';
+  [['airbags-y','airbags-n', noAirbags],
+   ['abs-y',    'abs-n',     noAbs],
+   ['esc-y',    'esc-n',     noEsc]].forEach(([y, n, disable]) => {
+    const ey = document.getElementById(y), en = document.getElementById(n);
+    if (ey) ey.disabled = disable;
+    if (en) en.disabled = disable;
+  });
 }
 
 // ── Data collectors ───────────────────────────────────────────────────────────
@@ -384,6 +422,7 @@ function eligFields() {
 
 function selData() {
   return {
+    vehicle_type: gv('vehicle_type') || 'any',
     budget_usd: gn('budget_usd'),
     fuel_preference: gv('fuel_pref') || 'any',
     brand_preference: gv('brand_pref') || 'any',
@@ -399,6 +438,17 @@ function costData() {
     origin_country: origin, fuel_type: fuel, engine_cc: gi('engine_cc'),
     ...(fuel === 'electric' && kw ? { motor_kw: kw } : {}),
     purchase_price_usd: gn('price_usd'),
+    ...(gn('usd_lkr') ? { usd_to_lkr: gn('usd_lkr') } : {}),
+    ...(origin === 'japan' && gn('jpy_usd') ? { jpy_to_usd: gn('jpy_usd') } : {}),
+  };
+}
+
+function allData() {
+  const origin = gv('origin_country');
+  return {
+    ...eligFields(),
+    budget_usd: gn('budget_usd'),
+    brand_preference: gv('brand_pref') || 'any',
     ...(gn('usd_lkr') ? { usd_to_lkr: gn('usd_lkr') } : {}),
     ...(origin === 'japan' && gn('jpy_usd') ? { jpy_to_usd: gn('jpy_usd') } : {}),
   };
@@ -524,15 +574,21 @@ async function runEngine() {
       renderCost(await post('/cost', costData()));
 
     } else {
-      const data = { ...eligFields(), ...selData(), ...costData() };
-      const res  = await post('/all', data);
+      const res = await post('/all', allData());
       renderEligibility(res.eligibility);
       renderSelector(res.selector);
       if (res.cost) {
+        const top = res.selector.recommendations[0];
+        wl(s('o-dim', `  Cost estimate for top recommendation: ${top.make} ${top.model} (${top.fuel_type}, ${top.engine_cc} cc, USD ${top.typical_price_usd.toLocaleString()})`));
+        wl('');
         renderCost(res.cost);
-      } else {
+      } else if (!res.eligibility.eligible) {
         wl('');
         wl(s('o-fail', '  Engine 3 skipped — vehicle is not eligible for import.'));
+        sep();
+      } else {
+        wl('');
+        wl(s('o-fail', '  Engine 3 skipped — no vehicles matched the budget and preferences.'));
         sep();
       }
     }

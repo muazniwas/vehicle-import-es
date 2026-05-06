@@ -92,8 +92,10 @@ class Recommendation(Fact):
         rank               int    1 = best match
         make               str
         model              str
+        vehicle_type       str    "car" | "suv" | "van" | "pickup" | ...
         engine_cc          int
         fuel_type          str
+        motor_kw           int | None  motor power (EV/hybrid); None for ICE
         typical_price_usd  float
         fit_score          float
         reason             str    why this vehicle was recommended

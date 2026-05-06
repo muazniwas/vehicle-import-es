@@ -215,10 +215,17 @@ class EligibilityEngine(KnowledgeEngine):
     # ── 6a. Minimum airbags ──────────────────────────────────────────────────
 
     @Rule(
-        ImportRequest(has_min_airbags=MATCH.airbags),
+        ImportRequest(vehicle_type=MATCH.vtype, has_min_airbags=MATCH.airbags),
         salience=55,
     )
-    def check_airbags(self, airbags):
+    def check_airbags(self, vtype, airbags):
+        if vtype in {"motorcycle", "three_wheeler"}:
+            self.declare(RuleFired(
+                engine="eligibility",
+                rule="check_airbags",
+                note=f"Airbag requirement not applicable for '{vtype}'.",
+            ))
+            return
         min_count = GENERAL_CONDITIONS["minimum_airbags"]["count"]
         if not airbags:
             self.declare(EligibilityResult(
@@ -245,10 +252,17 @@ class EligibilityEngine(KnowledgeEngine):
     # ── 6b. ABS ──────────────────────────────────────────────────────────────
 
     @Rule(
-        ImportRequest(has_abs=MATCH.abs_ok),
+        ImportRequest(vehicle_type=MATCH.vtype, has_abs=MATCH.abs_ok),
         salience=54,
     )
-    def check_abs(self, abs_ok):
+    def check_abs(self, vtype, abs_ok):
+        if vtype == "three_wheeler":
+            self.declare(RuleFired(
+                engine="eligibility",
+                rule="check_abs",
+                note="ABS requirement not applicable for 'three_wheeler'.",
+            ))
+            return
         if not abs_ok:
             self.declare(EligibilityResult(
                 eligible=False,
@@ -271,10 +285,17 @@ class EligibilityEngine(KnowledgeEngine):
     # ── 6c. ESC ──────────────────────────────────────────────────────────────
 
     @Rule(
-        ImportRequest(has_esc=MATCH.esc_ok),
+        ImportRequest(vehicle_type=MATCH.vtype, has_esc=MATCH.esc_ok),
         salience=53,
     )
-    def check_esc(self, esc_ok):
+    def check_esc(self, vtype, esc_ok):
+        if vtype in {"motorcycle", "three_wheeler"}:
+            self.declare(RuleFired(
+                engine="eligibility",
+                rule="check_esc",
+                note=f"ESC requirement not applicable for '{vtype}'.",
+            ))
+            return
         if not esc_ok:
             self.declare(EligibilityResult(
                 eligible=False,

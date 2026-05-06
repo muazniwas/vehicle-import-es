@@ -42,10 +42,11 @@ class SelectorEngine(KnowledgeEngine):
             budget_usd=MATCH.budget,
             fuel_preference=MATCH.fuel_pref,
             brand_preference=MATCH.brand_pref,
+            vehicle_type=MATCH.vtype,
         ),
         salience=100,
     )
-    def load_candidates(self, budget, fuel_pref, brand_pref):
+    def load_candidates(self, budget, fuel_pref, brand_pref, vtype):
         for v in VEHICLES:
             self.declare(VehicleCandidate(**v))
         self.declare(RuleFired(
@@ -54,7 +55,8 @@ class SelectorEngine(KnowledgeEngine):
             note=(
                 f"Loaded {len(VEHICLES)} vehicles from catalogue. "
                 f"Filters — budget: USD {budget:,.0f}, "
-                f"fuel: {fuel_pref}, brand: {brand_pref}."
+                f"fuel: {fuel_pref}, brand: {brand_pref}, "
+                f"vehicle type: {vtype}."
             ),
         ))
 
@@ -65,11 +67,13 @@ class SelectorEngine(KnowledgeEngine):
             budget_usd=MATCH.budget,
             fuel_preference=MATCH.fuel_pref,
             brand_preference=MATCH.brand_pref,
+            vehicle_type=MATCH.vtype,
         ),
         VehicleCandidate(
             make=MATCH.make,
             model=MATCH.model,
             fuel_type=MATCH.fuel,
+            vehicle_type=MATCH.vtype_candidate,
             typical_price_usd=MATCH.price,
             resale_score=MATCH.resale,
             popularity=MATCH.pop,
@@ -79,11 +83,14 @@ class SelectorEngine(KnowledgeEngine):
         TEST(lambda make, brand_pref: (
             brand_pref == "any" or make.lower() == brand_pref.lower()
         )),
+        TEST(lambda vtype_candidate, vtype: (
+            vtype == "any" or vtype_candidate == vtype
+        )),
         salience=50,
     )
     def score_candidate(
-        self, budget, fuel_pref, brand_pref,
-        make, model, fuel, price, resale, pop,
+        self, budget, fuel_pref, brand_pref, vtype,
+        make, model, fuel, vtype_candidate, price, resale, pop,
     ):
         price_fit = max(0.0, (budget - price) / budget)
         score = (
@@ -135,8 +142,10 @@ class SelectorEngine(KnowledgeEngine):
                 rank=rank,
                 make=vs["make"],
                 model=vs["model"],
+                vehicle_type=vc["vehicle_type"],
                 engine_cc=vc["engine_cc"],
                 fuel_type=vc["fuel_type"],
+                motor_kw=vc["motor_kw"],
                 typical_price_usd=vc["typical_price_usd"],
                 fit_score=vs["score"],
                 reason=(

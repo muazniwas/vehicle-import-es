@@ -91,8 +91,10 @@ def _run_selector(data: dict) -> SelectorResponse:
                 rank=r["rank"],
                 make=r["make"],
                 model=r["model"],
+                vehicle_type=r["vehicle_type"],
                 engine_cc=r["engine_cc"],
                 fuel_type=r["fuel_type"],
+                motor_kw=r["motor_kw"],
                 typical_price_usd=r["typical_price_usd"],
                 fit_score=r["fit_score"],
                 reason=r["reason"],
@@ -162,13 +164,45 @@ def estimate_cost(req: CostRequest):
 def run_all_engines(req: AllEnginesRequest):
     """
     Run all three engines in sequence.
-    Engine 3 (cost) is skipped if the vehicle fails Engine 1 (eligibility).
+
+    Engine 2 uses fuel_type as the fuel_preference.
+    Engine 3 is skipped if eligibility fails or no vehicles match.
+    When Engine 3 runs, its vehicle spec comes from the top recommendation
+    returned by Engine 2 — only exchange rates are taken from the request.
     """
     data = req.model_dump()
 
     eligibility = _run_eligibility(data)
-    selector = _run_selector(data)
-    cost = _run_cost(data) if eligibility.eligible else None
+
+    selector_data = {
+        "vehicle_type": data["vehicle_type"],
+        "budget_usd": data["budget_usd"],
+        "fuel_preference": data["fuel_type"],
+        "brand_preference": data["brand_preference"],
+    }
+    selector = _run_selector(selector_data)
+
+    cost = None
+    if eligibility.eligible and selector.recommendations:
+        top = selector.recommendations[0]
+        cost_data: dict = {
+            "vehicle_type": top.vehicle_type,
+            "manufacture_year": data["manufacture_year"],
+            "manufacture_month": data["manufacture_month"],
+            "bill_of_lading_year": data["bill_of_lading_year"],
+            "bill_of_lading_month": data["bill_of_lading_month"],
+            "origin_country": data["origin_country"],
+            "fuel_type": top.fuel_type,
+            "engine_cc": top.engine_cc,
+            "purchase_price_usd": top.typical_price_usd,
+        }
+        if top.motor_kw is not None:
+            cost_data["motor_kw"] = top.motor_kw
+        if data.get("usd_to_lkr") is not None:
+            cost_data["usd_to_lkr"] = data["usd_to_lkr"]
+        if data.get("jpy_to_usd") is not None:
+            cost_data["jpy_to_usd"] = data["jpy_to_usd"]
+        cost = _run_cost(cost_data)
 
     return AllEnginesResponse(
         eligibility=eligibility,

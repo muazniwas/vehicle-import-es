@@ -20,6 +20,7 @@ class EligibilityRequest(BaseModel):
 
 
 class SelectorRequest(BaseModel):
+    vehicle_type: str = "any"
     budget_usd: float
     fuel_preference: str = "any"
     brand_preference: str = "any"
@@ -41,14 +42,10 @@ class CostRequest(BaseModel):
 
 
 class AllEnginesRequest(EligibilityRequest):
-    # Selector fields
+    # Selector fields (fuel_preference is derived from fuel_type)
     budget_usd: float
-    fuel_preference: str = "any"
     brand_preference: str = "any"
-    # Cost fields
-    engine_cc: int
-    motor_kw: Optional[int] = None
-    purchase_price_usd: float
+    # Exchange rates for Engine 3 (cost data comes from top recommendation)
     usd_to_lkr: Optional[float] = None
     jpy_to_usd: Optional[float] = None
 
@@ -66,8 +63,10 @@ class RecommendationItem(BaseModel):
     rank: int
     make: str
     model: str
+    vehicle_type: str
     engine_cc: int
     fuel_type: str
+    motor_kw: Optional[int] = None
     typical_price_usd: float
     fit_score: float
     reason: str
