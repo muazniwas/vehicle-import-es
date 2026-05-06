@@ -23,6 +23,9 @@ class ImportRequest(Fact):
 
     Engine 3 (cost) adds:
         purchase_price_usd  float
+        usd_to_lkr          float  optional — today's exchange rate supplied by
+                                   the user; falls back to USD_TO_LKR_DEFAULT
+                                   in duty_rules.py if omitted
     """
     pass
 
