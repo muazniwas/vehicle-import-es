@@ -1,0 +1,300 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "SL Vehicle Import Expert System",
+    "description": "Sri Lanka vehicle import expert system \u2014 eligibility, vehicle selection, cost estimation, and combined run.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Eligibility",
+      "item": [
+        {
+          "name": "PASS \u2014 2022 Toyota Aqua (Japan, petrol_hybrid)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://127.0.0.1:8000/eligibility",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicle_type\": \"car\",\n  \"manufacture_year\": 2022,\n  \"manufacture_month\": 3,\n  \"bill_of_lading_year\": 2024,\n  \"bill_of_lading_month\": 6,\n  \"origin_country\": \"japan\",\n  \"fuel_type\": \"petrol_hybrid\",\n  \"euro6_compliant\": true,\n  \"has_min_airbags\": true,\n  \"has_abs\": true,\n  \"has_esc\": true,\n  \"has_battery_warranty\": true\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "FAIL \u2014 Too old (2018 car, exceeds 3-year limit)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://127.0.0.1:8000/eligibility",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicle_type\": \"car\",\n  \"manufacture_year\": 2018,\n  \"manufacture_month\": 1,\n  \"bill_of_lading_year\": 2024,\n  \"bill_of_lading_month\": 6,\n  \"origin_country\": \"japan\",\n  \"fuel_type\": \"petrol\",\n  \"euro6_compliant\": true,\n  \"has_min_airbags\": true,\n  \"has_abs\": true,\n  \"has_esc\": true,\n  \"has_battery_warranty\": false\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "FAIL \u2014 Bad origin (Germany)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://127.0.0.1:8000/eligibility",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicle_type\": \"car\",\n  \"manufacture_year\": 2023,\n  \"manufacture_month\": 1,\n  \"bill_of_lading_year\": 2024,\n  \"bill_of_lading_month\": 6,\n  \"origin_country\": \"germany\",\n  \"fuel_type\": \"petrol\",\n  \"euro6_compliant\": true,\n  \"has_min_airbags\": true,\n  \"has_abs\": true,\n  \"has_esc\": true,\n  \"has_battery_warranty\": false\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "FAIL \u2014 Petrol three-wheeler (must be electric)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://127.0.0.1:8000/eligibility",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicle_type\": \"three_wheeler\",\n  \"manufacture_year\": 2023,\n  \"manufacture_month\": 6,\n  \"bill_of_lading_year\": 2024,\n  \"bill_of_lading_month\": 6,\n  \"origin_country\": \"japan\",\n  \"fuel_type\": \"petrol\",\n  \"euro6_compliant\": true,\n  \"has_min_airbags\": true,\n  \"has_abs\": true,\n  \"has_esc\": true,\n  \"has_battery_warranty\": false\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "FAIL \u2014 Missing ESC",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://127.0.0.1:8000/eligibility",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicle_type\": \"car\",\n  \"manufacture_year\": 2023,\n  \"manufacture_month\": 1,\n  \"bill_of_lading_year\": 2024,\n  \"bill_of_lading_month\": 6,\n  \"origin_country\": \"uk\",\n  \"fuel_type\": \"diesel\",\n  \"euro6_compliant\": true,\n  \"has_min_airbags\": true,\n  \"has_abs\": true,\n  \"has_esc\": false,\n  \"has_battery_warranty\": false\n}"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Selector",
+      "item": [
+        {
+          "name": "Hybrid, any brand, USD 20,000",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://127.0.0.1:8000/selector",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"budget_usd\": 20000,\n  \"fuel_preference\": \"petrol_hybrid\",\n  \"brand_preference\": \"any\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Any fuel, Toyota only, USD 20,000",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://127.0.0.1:8000/selector",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"budget_usd\": 20000,\n  \"fuel_preference\": \"any\",\n  \"brand_preference\": \"toyota\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Electric, any brand, USD 30,000",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://127.0.0.1:8000/selector",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"budget_usd\": 30000,\n  \"fuel_preference\": \"electric\",\n  \"brand_preference\": \"any\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "No match \u2014 budget too low",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://127.0.0.1:8000/selector",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"budget_usd\": 500,\n  \"fuel_preference\": \"any\",\n  \"brand_preference\": \"any\"\n}"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Cost",
+      "item": [
+        {
+          "name": "Toyota Aqua 1500cc petrol_hybrid (Japan)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://127.0.0.1:8000/cost",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicle_type\": \"car\",\n  \"manufacture_year\": 2022,\n  \"manufacture_month\": 3,\n  \"bill_of_lading_year\": 2024,\n  \"bill_of_lading_month\": 6,\n  \"origin_country\": \"japan\",\n  \"fuel_type\": \"petrol_hybrid\",\n  \"engine_cc\": 1500,\n  \"purchase_price_usd\": 15000,\n  \"usd_to_lkr\": 320,\n  \"jpy_to_usd\": 0.00667\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Nissan Leaf 110kW electric (Japan)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://127.0.0.1:8000/cost",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicle_type\": \"car\",\n  \"manufacture_year\": 2023,\n  \"manufacture_month\": 1,\n  \"bill_of_lading_year\": 2024,\n  \"bill_of_lading_month\": 6,\n  \"origin_country\": \"japan\",\n  \"fuel_type\": \"electric\",\n  \"engine_cc\": 0,\n  \"motor_kw\": 110,\n  \"purchase_price_usd\": 18000,\n  \"usd_to_lkr\": 320,\n  \"jpy_to_usd\": 0.00667\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Land Rover Defender 2000cc diesel (UK) \u2014 luxury tax triggered",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://127.0.0.1:8000/cost",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicle_type\": \"suv\",\n  \"manufacture_year\": 2022,\n  \"manufacture_month\": 6,\n  \"bill_of_lading_year\": 2024,\n  \"bill_of_lading_month\": 6,\n  \"origin_country\": \"uk\",\n  \"fuel_type\": \"diesel\",\n  \"engine_cc\": 2000,\n  \"purchase_price_usd\": 55000,\n  \"usd_to_lkr\": 320\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Toyota HiAce van 2800cc diesel (Japan)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://127.0.0.1:8000/cost",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicle_type\": \"van\",\n  \"manufacture_year\": 2021,\n  \"manufacture_month\": 1,\n  \"bill_of_lading_year\": 2024,\n  \"bill_of_lading_month\": 6,\n  \"origin_country\": \"japan\",\n  \"fuel_type\": \"diesel\",\n  \"engine_cc\": 2800,\n  \"purchase_price_usd\": 22000,\n  \"usd_to_lkr\": 320,\n  \"jpy_to_usd\": 0.00667\n}"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "All Engines",
+      "item": [
+        {
+          "name": "ELIGIBLE \u2014 all 3 results returned",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://127.0.0.1:8000/all",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicle_type\": \"car\",\n  \"manufacture_year\": 2022,\n  \"manufacture_month\": 3,\n  \"bill_of_lading_year\": 2024,\n  \"bill_of_lading_month\": 6,\n  \"origin_country\": \"japan\",\n  \"fuel_type\": \"petrol_hybrid\",\n  \"euro6_compliant\": true,\n  \"has_min_airbags\": true,\n  \"has_abs\": true,\n  \"has_esc\": true,\n  \"has_battery_warranty\": true,\n  \"budget_usd\": 20000,\n  \"fuel_preference\": \"petrol_hybrid\",\n  \"brand_preference\": \"any\",\n  \"engine_cc\": 1500,\n  \"purchase_price_usd\": 15000,\n  \"usd_to_lkr\": 320,\n  \"jpy_to_usd\": 0.00667\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "INELIGIBLE \u2014 cost is null in response",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "http://127.0.0.1:8000/all",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicle_type\": \"car\",\n  \"manufacture_year\": 2018,\n  \"manufacture_month\": 1,\n  \"bill_of_lading_year\": 2024,\n  \"bill_of_lading_month\": 6,\n  \"origin_country\": \"japan\",\n  \"fuel_type\": \"petrol\",\n  \"euro6_compliant\": true,\n  \"has_min_airbags\": true,\n  \"has_abs\": true,\n  \"has_esc\": true,\n  \"has_battery_warranty\": false,\n  \"budget_usd\": 20000,\n  \"fuel_preference\": \"any\",\n  \"brand_preference\": \"any\",\n  \"engine_cc\": 1500,\n  \"purchase_price_usd\": 15000,\n  \"usd_to_lkr\": 320\n}"
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
