@@ -123,6 +123,9 @@ class SelectorEngine(KnowledgeEngine):
         salience=10,
     )
     def finalize_recommendations(self):
+        req = next(f for f in self.facts.values() if isinstance(f, ImportRequest))
+        top_n = req.get("top_n", 3)
+
         scores = sorted(
             (f for f in self.facts.values() if isinstance(f, VehicleScore)),
             key=lambda f: f["score"],
@@ -134,7 +137,7 @@ class SelectorEngine(KnowledgeEngine):
             if isinstance(f, VehicleCandidate)
         }
 
-        for rank, vs in enumerate(scores[:3], start=1):
+        for rank, vs in enumerate(scores[:top_n], start=1):
             vc = candidates.get((vs["make"], vs["model"]))
             if vc is None:
                 continue
@@ -157,12 +160,13 @@ class SelectorEngine(KnowledgeEngine):
                 ),
             ))
 
+        shown = min(top_n, len(scores))
         self.declare(RuleFired(
             engine="selector",
             rule="finalize_recommendations",
             note=(
-                f"Top {min(3, len(scores))} recommendations selected "
-                f"from {len(scores)} matching vehicles."
+                f"Showing {shown} of {len(scores)} matching vehicles "
+                f"(requested {top_n})."
             ),
         ))
 

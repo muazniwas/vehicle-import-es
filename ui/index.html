@@ -335,10 +335,11 @@ const safetyFields = () =>
 
 const selectorFields = () =>
   sec('Search Preferences') +
-  fld('Vehicle Type',     mkSel('vehicle_type', ['any', ...VT], 'any')) +
-  fld('Budget (USD)',      mkNum('budget_usd', 20000, 500, 500000, 500)) +
-  fld('Fuel Preference',  mkSel('fuel_pref', FP, 'any')) +
-  fld('Brand Preference', mkSel('brand_pref', BRANDS, 'any'));
+  fld('Vehicle Type',              mkSel('vehicle_type', ['any', ...VT], 'any')) +
+  fld('Budget (USD)',              mkNum('budget_usd', 20000, 500, 500000, 500)) +
+  fld('Fuel Preference',          mkSel('fuel_pref', FP, 'any')) +
+  fld('Brand Preference',         mkSel('brand_pref', BRANDS, 'any')) +
+  fld('Recommendations to show',  mkNum('top_n', 3, 1, 10));
 
 const costFields = () =>
   sec('Engine & Price') +
@@ -426,6 +427,7 @@ function selData() {
     budget_usd: gn('budget_usd'),
     fuel_preference: gv('fuel_pref') || 'any',
     brand_preference: gv('brand_pref') || 'any',
+    top_n: gi('top_n') || 3,
   };
 }
 

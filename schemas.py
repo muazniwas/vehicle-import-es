@@ -24,6 +24,7 @@ class SelectorRequest(BaseModel):
     budget_usd: float
     fuel_preference: str = "any"
     brand_preference: str = "any"
+    top_n: int = 3
 
 
 class CostRequest(BaseModel):
