@@ -8,18 +8,27 @@ class ImportRequest(Fact):
     Declared once by the UI before any engine runs.
 
     Engine 1 (eligibility) uses:
-        permit_type       str   "SLBFE_1" | "SLBFE_2" | "SLBFE_3"
-                                | "DIPLOMATIC" | "PERSONAL" | "BOI"
-        manufacture_year  int   e.g. 2021
-        engine_cc         int   e.g. 1500
-        fuel_type         str   "petrol" | "diesel" | "hybrid" | "electric"
-        origin_country    str   "japan" | "uk" | "singapore" | "australia"
-        vehicle_type      str   "car" | "van" | "suv" | "luxury"
+        vehicle_type           str   "car" | "suv" | "van" | "pickup"
+                                     | "motorcycle" | "three_wheeler"
+        manufacture_year       int   e.g. 2021
+        manufacture_month      int   1–12
+        bill_of_lading_year    int   e.g. 2024
+        bill_of_lading_month   int   1–12
+        origin_country         str   "japan" | "uk" | "singapore" | "australia"
+        fuel_type              str   "petrol" | "diesel" | "petrol_hybrid"
+                                     | "electric"
+        euro6_compliant        bool  True if vehicle meets Euro 6 or higher
+        has_min_airbags        bool  True if vehicle has ≥ 2 airbags
+        has_abs                bool  True if vehicle has ABS
+        has_esc                bool  True if vehicle has ESC
+        has_battery_warranty   bool  True if EV/hybrid battery warranty ≥ 5yr
+                                     / 100,000 km (ignored for petrol/diesel)
 
     Engine 2 (selector) adds:
-        budget_usd        float
-        fuel_preference   str   same values as fuel_type, or "any"
-        brand_preference  str   e.g. "toyota", or "any"
+        engine_cc          int
+        budget_usd         float
+        fuel_preference    str   same values as fuel_type, or "any"
+        brand_preference   str   e.g. "toyota", or "any"
 
     Engine 3 (cost) adds:
         purchase_price_usd  float
