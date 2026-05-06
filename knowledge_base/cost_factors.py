@@ -103,12 +103,14 @@ JPY_TO_USD_RATE_DEFAULT = 1 / 150.0
 # 1,000) + documentation (LKR 150). Transfer fee excluded (first registration).
 
 DMT_REGISTRATION_LKR = {
-    "car_small":  29_450,  # motor car, engine ≤ 1,600 cc or motor ≤ 80 kW
-    "car_large":  44_450,  # motor car, engine > 1,600 cc or motor > 80 kW
-    "suv_small":  24_450,  # dual purpose vehicle, engine ≤ 1,000 cc or ≤ 50 kW
-    "suv_large":  29_450,  # dual purpose vehicle, engine > 1,000 cc or > 50 kW
-    "van":        29_450,  # treated as dual purpose (large)
-    "pickup":     29_450,  # treated as dual purpose (large)
+    "car_small":      29_450,  # motor car, engine ≤ 1,600 cc or motor ≤ 80 kW
+    "car_large":      44_450,  # motor car, engine > 1,600 cc or motor > 80 kW
+    "suv_small":      24_450,  # dual purpose vehicle, engine ≤ 1,000 cc or ≤ 50 kW
+    "suv_large":      29_450,  # dual purpose vehicle, engine > 1,000 cc or > 50 kW
+    "van":            29_450,  # treated as dual purpose (large)
+    "pickup":         29_450,  # treated as dual purpose (large)
+    "motorcycle":      9_450,  # motor cycle registration fee + plates + inspection
+    "three_wheeler":  12_450,  # three-wheeler registration fee + plates + inspection
 }
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -163,6 +165,8 @@ def get_registration_lkr(vehicle_type: str, engine_cc: int) -> float:
         key = "car_small" if engine_cc <= 1600 else "car_large"
     elif vehicle_type == "suv":
         key = "suv_small" if engine_cc <= 1000 else "suv_large"
+    elif vehicle_type in DMT_REGISTRATION_LKR:
+        key = vehicle_type
     else:
-        key = vehicle_type   # "van" or "pickup"
+        raise ValueError(f"Unknown vehicle_type '{vehicle_type}' for registration fee lookup")
     return float(DMT_REGISTRATION_LKR[key])
