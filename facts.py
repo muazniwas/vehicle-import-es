@@ -31,6 +31,9 @@ class ImportRequest(Fact):
         brand_preference   str   e.g. "toyota", or "any"
 
     Engine 3 (cost) adds:
+        engine_cc           int    engine displacement in cc (0 for electric)
+        motor_kw            int    motor power in kW (electric/hybrid only,
+                                   None for petrol/diesel)
         purchase_price_usd  float
         usd_to_lkr          float  optional — today's USD/LKR rate; falls back
                                    to USD_TO_LKR_DEFAULT in duty_rules.py
@@ -102,15 +105,14 @@ class Recommendation(Fact):
 
 class DutyRate(Fact):
     """
-    One fact per duty band loaded from duty_rules at the start of Engine 3.
+    Asserted by Engine 3 with the resolved duty rates for this specific vehicle.
 
-        fuel_type    str
-        cc_min       int
-        cc_max       int    use 9999 for an open-ended upper band
-        customs_pct  float  customs duty as % of CIF value
-        excise_pct   float  excise duty as % of CIF value
-        pal_pct      float  port & airport levy as % of CIF (fixed 7.5)
-        vat_pct      float  VAT as % of (CIF + all duties above)
+        fuel_type        str    the vehicle's fuel type
+        excise_duty_lkr  float  total excise duty in LKR for this vehicle
+                                (LKR/cc × cc for ICE/hybrid; LKR/kW × kW for EV)
+        customs_pct      float  customs import duty rate (0.20 = 20 % of CIF)
+        cid_surcharge_pct float CID surcharge rate (0.50 = 50 % of CID)
+        vat_pct          float  VAT rate (0.18 = 18 %)
     """
     pass
 
@@ -119,19 +121,21 @@ class CostBreakdown(Fact):
     """
     Asserted by Engine 3 with the full landed cost.
 
-        purchase_price_usd  float
-        shipping_usd        float
-        insurance_usd       float
-        cif_usd             float   purchase + shipping + insurance
-        customs_duty_usd    float
-        excise_duty_usd     float
-        pal_usd             float
-        vat_usd             float
-        port_charges_usd    float
-        total_usd           float
-        total_lkr           float
-        registration_lkr    float
-        grand_total_lkr     float
+        purchase_price_usd   float
+        shipping_usd         float
+        insurance_usd        float
+        jaai_usd             float  JAAI pre-shipment inspection (Japan only; 0 otherwise)
+        cif_usd              float  purchase + shipping + insurance
+        cid_usd              float  customs import duty (20 % of CIF)
+        cid_surcharge_usd    float  CID surcharge (50 % of CID)
+        excise_duty_usd      float  excise duty (converted from LKR)
+        luxury_tax_usd       float  luxury tax (converted from LKR; 0 if below threshold)
+        vat_usd              float  VAT 18 % on (CIF + CID + surcharge + excise + luxury)
+        port_charges_usd     float  Colombo port THC, wharfage, D/O, clearing agent
+        total_usd            float  sum of all above
+        total_lkr            float  total_usd × usd_to_lkr
+        registration_lkr     float  DMT first registration fee
+        grand_total_lkr      float  total_lkr + registration_lkr
     """
     pass
 
