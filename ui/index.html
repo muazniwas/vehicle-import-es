@@ -278,7 +278,8 @@ let eng = 0;
 // ── Form builders ─────────────────────────────────────────────────────────────
 
 const VT = ['car','suv','van','pickup','motorcycle','three_wheeler'];
-const OR = ['japan','uk','singapore','australia'];
+const OR     = ['japan','uk','singapore','australia'];
+const OR_ALL = ['japan','uk','singapore','australia','germany','usa','france','south_korea'];
 const FT = ['petrol','diesel','petrol_hybrid','electric'];
 const FP = ['any','petrol','diesel','petrol_hybrid','electric'];
 const BRANDS = ['any','BMW','Daihatsu','Ford','Honda','Hyundai','Isuzu','Jaguar','Kia',
@@ -313,10 +314,10 @@ function gn(id) { const v = parseFloat(gv(id)); return isNaN(v) ? null : v; }
 function gi(id) { const v = parseInt(gv(id));   return isNaN(v) ? null : v; }
 
 // Form fragments
-const vehicleFields = () =>
+const vehicleFields = (allOrigins = false) =>
   sec('Vehicle Details') +
   fld('Vehicle Type',    mkSel('vehicle_type', VT, 'car', 'updateSafetyFields()')) +
-  fld('Origin Country',  mkSel('origin_country', OR, 'japan')) +
+  fld('Origin Country',  mkSel('origin_country', allOrigins ? OR_ALL : OR, 'japan')) +
   fld('Fuel Type',       mkSel('fuel_type', FT, 'petrol_hybrid')) +
   sec('Manufacture Date') +
   fld('Year',  mkNum('mfr_year',  2022, 1990, 2025)) +
@@ -353,7 +354,7 @@ const costFields = () =>
 const allEnginesFields = () =>
   sec('Vehicle Details') +
   fld('Vehicle Type',     mkSel('vehicle_type', VT, 'car', 'updateSafetyFields()')) +
-  fld('Origin Country',   mkSel('origin_country', OR, 'japan')) +
+  fld('Origin Country',   mkSel('origin_country', OR_ALL, 'japan')) +
   fld('Fuel Type',        mkSel('fuel_type', FT, 'petrol_hybrid')) +
   fld('Budget (USD)',     mkNum('budget_usd', 20000, 500, 500000, 500)) +
   fld('Brand Preference', mkSel('brand_pref', BRANDS, 'any')) +
@@ -369,9 +370,9 @@ const allEnginesFields = () =>
   fld('JPY → USD Rate', mkNum('jpy_usd', 0.00667, 0.001, 0.02, 0.00001));
 
 const FORMS = [
-  () => vehicleFields() + safetyFields(),
+  () => vehicleFields(true) + safetyFields(),  // Engine 1: include invalid origins
   () => selectorFields(),
-  () => vehicleFields() + costFields(),
+  () => vehicleFields() + costFields(),         // Engine 3: valid origins only
   () => allEnginesFields(),
 ];
 
