@@ -285,6 +285,7 @@ const FP = ['any','petrol','diesel','petrol_hybrid','electric'];
 const BRANDS = ['any','BMW','Daihatsu','Ford','Honda','Hyundai','Isuzu','Jaguar','Kia',
   'Land Rover','Lexus','Mazda','Mercedes-Benz','MINI','Mitsubishi','Nissan',
   'Subaru','Suzuki','Toyota','Vauxhall','Volkswagen','Volvo'];
+const IT = ['individual','registered_importer','diplomatic','state_institution'];
 
 const mkSel = (id, opts, def, onchange='') =>
   `<select id="${id}"${onchange ? ` onchange="${onchange}"` : ''}>${opts.map(o=>`<option${o===def?' selected':''}>${o}</option>`).join('')}</select>`;
@@ -319,6 +320,7 @@ const vehicleFields = (allOrigins = false) =>
   fld('Vehicle Type',    mkSel('vehicle_type', VT, 'car', 'updateSafetyFields()')) +
   fld('Origin Country',  mkSel('origin_country', allOrigins ? OR_ALL : OR, 'japan')) +
   fld('Fuel Type',       mkSel('fuel_type', FT, 'petrol_hybrid')) +
+  fld('Importer Type',   mkSel('importer_type', IT, 'individual')) +
   sec('Manufacture Date') +
   fld('Year',  mkNum('mfr_year',  2022, 1990, 2025)) +
   fld('Month', mkNum('mfr_month', 1,    1,    12)) +
@@ -328,6 +330,7 @@ const vehicleFields = (allOrigins = false) =>
 
 const safetyFields = () =>
   sec('Safety & Compliance') +
+  fld('Right-Hand Drive (RHD)',          mkTog('is_rhd',  true)) +
   fld('Euro 6 Compliant',               mkTog('euro6',  true)) +
   fld('Minimum 2 Airbags',              mkTog('airbags',true)) +
   fld('ABS (Anti-lock Brakes)',         mkTog('abs',    true)) +
@@ -356,6 +359,7 @@ const allEnginesFields = () =>
   fld('Vehicle Type',     mkSel('vehicle_type', VT, 'car', 'updateSafetyFields()')) +
   fld('Origin Country',   mkSel('origin_country', OR_ALL, 'japan')) +
   fld('Fuel Type',        mkSel('fuel_type', FT, 'petrol_hybrid')) +
+  fld('Importer Type',    mkSel('importer_type', IT, 'individual')) +
   fld('Budget (USD)',     mkNum('budget_usd', 20000, 500, 500000, 500)) +
   fld('Brand Preference', mkSel('brand_pref', BRANDS, 'any')) +
   sec('Manufacture Date') +
@@ -389,6 +393,7 @@ function selEngine(n) {
   document.getElementById('form-area').innerHTML = FORMS[n]();
   document.getElementById('form-title').textContent = TITLES[n];
   updateSafetyFields();
+  showTabInfo(n);
 }
 
 function updateSafetyFields() {
@@ -414,6 +419,8 @@ function eligFields() {
     bill_of_lading_year: gi('bol_year'), bill_of_lading_month: gi('bol_month'),
     origin_country: gv('origin_country'),
     fuel_type: gv('fuel_type'),
+    importer_type: gv('importer_type') || 'individual',
+    is_rhd: getTog('is_rhd'),
     euro6_compliant: getTog('euro6'),
     has_min_airbags: getTog('airbags'),
     has_abs: getTog('abs'),
@@ -439,6 +446,7 @@ function costData() {
     manufacture_year: gi('mfr_year'), manufacture_month: gi('mfr_month'),
     bill_of_lading_year: gi('bol_year'), bill_of_lading_month: gi('bol_month'),
     origin_country: origin, fuel_type: fuel, engine_cc: gi('engine_cc'),
+    importer_type: gv('importer_type') || 'individual',
     ...(fuel === 'electric' && kw ? { motor_kw: kw } : {}),
     purchase_price_usd: gn('price_usd'),
     ...(gn('usd_lkr') ? { usd_to_lkr: gn('usd_lkr') } : {}),
@@ -621,29 +629,103 @@ async function post(path, data) {
 
 function clearOut() {
   out.innerHTML = '';
-  welcome();
+  showTabInfo(eng);
 }
 
-// ── Welcome message ───────────────────────────────────────────────────────────
+// ── Tab info panels ───────────────────────────────────────────────────────────
 
-function welcome() {
+function showTabInfo(n) {
+  out.innerHTML = '';
+
+  // Common header
   sep();
   wl(s('o-head', '  Sri Lanka Vehicle Import Expert System'));
   wl(s('o-dim',  '  Knowledge Base: Gazette Extraordinary No. 2421/44 (1 February 2025)'));
   sep();
   wl('');
-  wl(s('o-label', '  Engine 1 ') + s('o-note',  'Checks whether a vehicle meets Sri Lanka import regulations.'));
-  wl(s('o-label', '  Engine 2 ') + s('o-note',  'Recommends the best vehicles within your budget and preferences.'));
-  wl(s('o-label', '  Engine 3 ') + s('o-note',  'Estimates the full landed cost including all duties and taxes.'));
-  wl('');
-  wl(s('o-dim',   '  Select an engine from the tabs above, fill in the parameters, and click Run.'));
+
+  if (n === 0) {
+    wl(s('o-hl', '  ELIGIBILITY RULES') + s('o-dim', '   (rules fire in order; first failure halts the engine)'));
+    wl('');
+    const rules = [
+      ['01', 'Origin Country',       'Allowed: Japan, United Kingdom, Singapore, Australia'],
+      ['02', 'Vehicle Type',         'Allowed: car, suv, van, pickup, motorcycle, three_wheeler'],
+      ['03', 'Drive Configuration',  'Right-hand drive (RHD) only — LHD vehicles are rejected'],
+      ['04', 'Age Limit',            'Passenger, motorcycle & three-wheeler: ≤ 3 yrs  |  Van: ≤ 5 yrs'],
+      ['05', 'Fuel Restriction',     'Three-wheelers: electric only. All other types: any fuel.'],
+      ['06', 'Euro 6 Compliance',    'Mandatory for petrol and diesel vehicles only'],
+      ['07', 'Min. 2 Airbags',       'Required — not applicable for motorcycle & three-wheeler'],
+      ['08', 'ABS',                  'Required — not applicable for three-wheeler'],
+      ['09', 'ESC',                  'Required — not applicable for motorcycle & three-wheeler'],
+      ['10', 'Battery Warranty',     'EV & hybrid: manufacturer warranty ≥ 5 years or 100,000 km'],
+    ];
+    rules.forEach(([num, name, desc]) => {
+      wl(s('o-rule', `  [Rule ${num}]  `) + s('o-val', name.padEnd(20)) + s('o-note', '  ' + desc));
+    });
+
+  } else if (n === 1) {
+    wl(s('o-hl', '  VEHICLE SCORING SYSTEM'));
+    wl('');
+    wl(s('o-label', '  Fit Score  (0.0 – 1.0)'));
+    wl('');
+    wl(s('o-note', '    35 %  ×  resale_score / 10      local resale value retention  (1 – 10)'));
+    wl(s('o-note', '    35 %  ×  popularity / 10        local market demand           (1 – 10)'));
+    wl(s('o-note', '    30 %  ×  price_fit              max( 0,  (budget − price) / budget )'));
+    wl('');
+    wl(s('o-label', '  Bonuses  (each +0.05, total capped at 1.0)'));
+    wl('');
+    wl(s('o-note', '    +0.05  if fuel type matches your fuel preference'));
+    wl(s('o-note', '    +0.05  if make matches your brand preference'));
+    wl('');
+    sep();
+    wl('');
+    wl(s('o-label', '  Filters applied before scoring'));
+    wl('');
+    wl(s('o-note', '    Budget  — only vehicles priced ≤ budget enter scoring'));
+    wl(s('o-note', '    Fuel    — skipped if fuel_preference is set and fuel differs'));
+    wl(s('o-note', '    Brand   — skipped if brand_preference is set and make differs'));
+    wl(s('o-note', '    Type    — skipped if vehicle_type is set and type differs'));
+    wl('');
+    wl(s('o-dim', '  Vehicle catalogue: 105 models sourced from Japan, UK, Singapore & Australia'));
+
+  } else if (n === 2) {
+    wl(s('o-hl', '  LANDED COST — DUTY CASCADE'));
+    wl(s('o-dim', '  Per Gazette Extraordinary No. 2421/44 (1 February 2025)'));
+    wl('');
+    const steps = [
+      ['Step 1', 'CIF',             'Purchase price  +  sea freight  +  marine insurance'],
+      ['Step 2', 'Customs duty',    '20 % of CIF'],
+      ['Step 3', 'CID surcharge',   '50 % of customs duty'],
+      ['Step 4', 'Excise duty',     'LKR/cc × engine cc   —   or   LKR/kW × motor kW  (EVs)'],
+      ['Step 5', 'Luxury tax',      'Applied when CIF (LKR) exceeds threshold; rate varies by type'],
+      ['Step 6', 'VAT',             '18 % of  (CIF + customs + surcharge + excise + luxury tax)'],
+      ['Step 7', 'Port charges',    'THC + SLPA wharfage + delivery order fee + clearing agent'],
+      ['Step 8', 'JAAI fee',        'Pre-shipment inspection fee — Japan-origin vehicles only'],
+      ['+',      'DMT registration','First registration fee at Department of Motor Traffic'],
+    ];
+    steps.forEach(([step, name, desc]) => {
+      wl(s('o-rule', `  ${step.padEnd(8)}`) + s('o-val', name.padEnd(18)) + s('o-note', '  ' + desc));
+    });
+    wl('');
+    wl(s('o-dim', '  Grand Total  =  all steps converted to LKR  +  DMT registration fee'));
+    wl('');
+    wl(s('o-dim', '  Diplomatic importers (Vienna Convention): CID, excise duty, VAT & luxury tax are all waived.'));
+
+  } else {
+    wl(s('o-label', '  Engine 1 ') + s('o-note', 'Checks whether a vehicle meets Sri Lanka import regulations.'));
+    wl(s('o-label', '  Engine 2 ') + s('o-note', 'Recommends the best vehicles within your budget and preferences.'));
+    wl(s('o-label', '  Engine 3 ') + s('o-note', 'Estimates the full landed cost including all duties and taxes.'));
+    wl('');
+    wl(s('o-dim', '  Fill in the parameters on the left and click Run to execute all three engines in sequence.'));
+    wl(s('o-dim', '  Engine 3 inputs are derived automatically from the top recommendation of Engine 2.'));
+  }
+
   wl('');
   sep();
   out.innerHTML = `<div id="welcome-msg">${out.innerHTML}</div>`;
 }
 
 selEngine(0);
-welcome();
 </script>
 </body>
 </html>

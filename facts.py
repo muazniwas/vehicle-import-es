@@ -17,12 +17,15 @@ class ImportRequest(Fact):
         origin_country         str   "japan" | "uk" | "singapore" | "australia"
         fuel_type              str   "petrol" | "diesel" | "petrol_hybrid"
                                      | "electric"
+        is_rhd                 bool  True if vehicle is right-hand drive
         euro6_compliant        bool  True if vehicle meets Euro 6 or higher
         has_min_airbags        bool  True if vehicle has ≥ 2 airbags
         has_abs                bool  True if vehicle has ABS
         has_esc                bool  True if vehicle has ESC
         has_battery_warranty   bool  True if EV/hybrid battery warranty ≥ 5yr
                                      / 100,000 km (ignored for petrol/diesel)
+        importer_type          str   "individual" | "registered_importer"
+                                     | "diplomatic" | "state_institution"
 
     Engine 2 (selector) adds:
         engine_cc          int
@@ -115,6 +118,8 @@ class DutyRate(Fact):
         customs_pct      float  customs import duty rate (0.20 = 20 % of CIF)
         cid_surcharge_pct float CID surcharge rate (0.50 = 50 % of CID)
         vat_pct          float  VAT rate (0.18 = 18 %)
+        duty_exempt      bool   True for diplomatic importers (Vienna Convention
+                                duty-free); when True all duty fields are 0.0
     """
     pass
 

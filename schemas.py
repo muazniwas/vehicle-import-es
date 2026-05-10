@@ -12,11 +12,13 @@ class EligibilityRequest(BaseModel):
     bill_of_lading_month: int
     origin_country: str
     fuel_type: str
+    is_rhd: bool
     euro6_compliant: bool
     has_min_airbags: bool
     has_abs: bool
     has_esc: bool
     has_battery_warranty: bool
+    importer_type: str = "individual"
 
 
 class SelectorRequest(BaseModel):
@@ -40,6 +42,7 @@ class CostRequest(BaseModel):
     purchase_price_usd: float
     usd_to_lkr: Optional[float] = None
     jpy_to_usd: Optional[float] = None
+    importer_type: str = "individual"
 
 
 class AllEnginesRequest(EligibilityRequest):

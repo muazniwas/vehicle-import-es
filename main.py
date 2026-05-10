@@ -198,6 +198,8 @@ def run_all_engines(req: AllEnginesRequest):
         }
         if top.motor_kw is not None:
             cost_data["motor_kw"] = top.motor_kw
+        if data.get("importer_type"):
+            cost_data["importer_type"] = data["importer_type"]
         if data.get("usd_to_lkr") is not None:
             cost_data["usd_to_lkr"] = data["usd_to_lkr"]
         if data.get("jpy_to_usd") is not None:

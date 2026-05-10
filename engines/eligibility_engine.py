@@ -21,6 +21,7 @@ from knowledge_base.import_regulations import (
     get_allowed_fuels,
     is_origin_allowed,
     GENERAL_CONDITIONS,
+    IMPORTER_TYPES,
 )
 
 
@@ -98,7 +99,34 @@ class EligibilityEngine(KnowledgeEngine):
                 note=f"Vehicle type '{vtype}' is valid.",
             ))
 
-    # ── 3. Age limit ─────────────────────────────────────────────────────────
+    # ── 3. Drive configuration ───────────────────────────────────────────────
+
+    @Rule(
+        ImportRequest(is_rhd=MATCH.is_rhd),
+        salience=72,
+    )
+    def check_drive_config(self, is_rhd):
+        drive_cond = GENERAL_CONDITIONS["drive_configuration"]
+        if not is_rhd:
+            self.declare(EligibilityResult(
+                eligible=False,
+                reason=drive_cond["reason"],
+                rule_fired="check_drive_config",
+            ))
+            self.declare(RuleFired(
+                engine="eligibility",
+                rule="check_drive_config",
+                note="LHD vehicle rejected — Sri Lanka requires right-hand drive.",
+            ))
+            self.halt()
+        else:
+            self.declare(RuleFired(
+                engine="eligibility",
+                rule="check_drive_config",
+                note="Drive configuration: RHD confirmed.",
+            ))
+
+    # ── 4. Age limit ─────────────────────────────────────────────────────────
 
     @Rule(
         ImportRequest(
@@ -142,7 +170,7 @@ class EligibilityEngine(KnowledgeEngine):
                 note=f"Age {age:.1f}yr within {max_age}yr limit for '{vtype}'.",
             ))
 
-    # ── 4. Fuel restriction by vehicle type ──────────────────────────────────
+    # ── 5. Fuel restriction by vehicle type ──────────────────────────────────
 
     @Rule(
         ImportRequest(vehicle_type=MATCH.vtype, fuel_type=MATCH.fuel),
@@ -175,7 +203,7 @@ class EligibilityEngine(KnowledgeEngine):
                 note=f"Fuel type '{fuel}' allowed for '{vtype}'.",
             ))
 
-    # ── 5. Euro 6 emissions (petrol and diesel only) ─────────────────────────
+    # ── 6. Euro 6 emissions (petrol and diesel only) ─────────────────────────
 
     @Rule(
         ImportRequest(
@@ -212,7 +240,7 @@ class EligibilityEngine(KnowledgeEngine):
                 ),
             ))
 
-    # ── 6a. Minimum airbags ──────────────────────────────────────────────────
+    # ── 7a. Minimum airbags ──────────────────────────────────────────────────
 
     @Rule(
         ImportRequest(vehicle_type=MATCH.vtype, has_min_airbags=MATCH.airbags),
@@ -249,7 +277,7 @@ class EligibilityEngine(KnowledgeEngine):
                 note="Airbag requirement met.",
             ))
 
-    # ── 6b. ABS ──────────────────────────────────────────────────────────────
+    # ── 7b. ABS ──────────────────────────────────────────────────────────────
 
     @Rule(
         ImportRequest(vehicle_type=MATCH.vtype, has_abs=MATCH.abs_ok),
@@ -282,7 +310,7 @@ class EligibilityEngine(KnowledgeEngine):
                 note="ABS present.",
             ))
 
-    # ── 6c. ESC ──────────────────────────────────────────────────────────────
+    # ── 7c. ESC ──────────────────────────────────────────────────────────────
 
     @Rule(
         ImportRequest(vehicle_type=MATCH.vtype, has_esc=MATCH.esc_ok),
@@ -315,7 +343,7 @@ class EligibilityEngine(KnowledgeEngine):
                 note="ESC present.",
             ))
 
-    # ── 7. EV / hybrid battery warranty ─────────────────────────────────────
+    # ── 8. EV / hybrid battery warranty ─────────────────────────────────────
 
     @Rule(
         ImportRequest(
@@ -354,7 +382,31 @@ class EligibilityEngine(KnowledgeEngine):
                 ),
             ))
 
-    # ── 8. All checks passed ─────────────────────────────────────────────────
+    # ── 9. Importer type acknowledgement ────────────────────────────────────
+
+    @Rule(
+        ImportRequest(importer_type=MATCH.itype),
+        NOT(EligibilityResult()),
+        salience=45,
+    )
+    def check_importer_type(self, itype):
+        info = IMPORTER_TYPES.get(itype, {})
+        desc = info.get("description", itype)
+        if itype == "diplomatic":
+            note = f"Importer type: {desc}. Vienna Convention duty-free provisions apply to Engine 3 cost calculation."
+        elif itype == "individual":
+            note = f"Importer type: {desc}. Maximum 1 import per 12-month period applies."
+        elif itype == "registered_importer":
+            note = f"Importer type: {desc}. No import frequency restriction."
+        else:
+            note = f"Importer type: {desc}."
+        self.declare(RuleFired(
+            engine="eligibility",
+            rule="check_importer_type",
+            note=note,
+        ))
+
+    # ── 10. All checks passed ────────────────────────────────────────────────
 
     @Rule(
         ImportRequest(),

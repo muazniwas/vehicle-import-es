@@ -83,23 +83,43 @@ class CostEngine(KnowledgeEngine):
             req["bill_of_lading_year"], req["bill_of_lading_month"],
         )
 
-        excise_lkr = get_excise_duty_lkr(fuel, engine_cc, motor_kw, age)
+        is_diplomatic = req.get("importer_type", "individual") == "diplomatic"
 
-        self.declare(DutyRate(
-            fuel_type=fuel,
-            excise_duty_lkr=excise_lkr,
-            customs_pct=CUSTOMS_DUTY_RATE,
-            cid_surcharge_pct=CID_SURCHARGE_RATE,
-            vat_pct=VAT_RATE,
-        ))
-        self.declare(RuleFired(
-            engine="cost",
-            rule="load_duty_rate",
-            note=(
-                f"Excise duty resolved: LKR {excise_lkr:,.0f} "
-                f"({fuel}, {engine_cc} cc, age {age:.1f} yr)."
-            ),
-        ))
+        if is_diplomatic:
+            self.declare(DutyRate(
+                fuel_type=fuel,
+                excise_duty_lkr=0.0,
+                customs_pct=0.0,
+                cid_surcharge_pct=0.0,
+                vat_pct=0.0,
+                duty_exempt=True,
+            ))
+            self.declare(RuleFired(
+                engine="cost",
+                rule="load_duty_rate",
+                note=(
+                    "Diplomatic importer — Vienna Convention duty-free: "
+                    "CID, excise duty, VAT, and luxury tax all waived."
+                ),
+            ))
+        else:
+            excise_lkr = get_excise_duty_lkr(fuel, engine_cc, motor_kw, age)
+            self.declare(DutyRate(
+                fuel_type=fuel,
+                excise_duty_lkr=excise_lkr,
+                customs_pct=CUSTOMS_DUTY_RATE,
+                cid_surcharge_pct=CID_SURCHARGE_RATE,
+                vat_pct=VAT_RATE,
+                duty_exempt=False,
+            ))
+            self.declare(RuleFired(
+                engine="cost",
+                rule="load_duty_rate",
+                note=(
+                    f"Excise duty resolved: LKR {excise_lkr:,.0f} "
+                    f"({fuel}, {engine_cc} cc, age {age:.1f} yr)."
+                ),
+            ))
 
     # ── 2. Apply full duty cascade and declare CostBreakdown ─────────────────
 
@@ -113,6 +133,7 @@ class CostEngine(KnowledgeEngine):
         req = next(f for f in self.facts.values() if isinstance(f, ImportRequest))
         dr  = next(f for f in self.facts.values() if isinstance(f, DutyRate))
 
+        duty_exempt = dr.get("duty_exempt", False)
         price    = req["purchase_price_usd"]
         origin   = req["origin_country"]
         vtype    = req["vehicle_type"]
@@ -199,7 +220,7 @@ class CostEngine(KnowledgeEngine):
         ))
 
         # ── Step 5: Luxury tax ───────────────────────────────────────────────
-        luxury_lkr = get_luxury_tax_lkr(fuel, cif_lkr)
+        luxury_lkr = 0.0 if duty_exempt else get_luxury_tax_lkr(fuel, cif_lkr)
 
         if luxury_lkr > 0:
             self.declare(RuleFired(
