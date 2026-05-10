@@ -310,7 +310,7 @@ class EligibilityEngine(KnowledgeEngine):
                 note="ABS present.",
             ))
 
-    # ── 7c. ESC ──────────────────────────────────────────────────────────────
+    # ── 7c. ESC (Electronic Stability Control) ───────────────────────────────
 
     @Rule(
         ImportRequest(vehicle_type=MATCH.vtype, has_esc=MATCH.esc_ok),
